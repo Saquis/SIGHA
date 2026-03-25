@@ -1,0 +1,14 @@
+<!-- German Del Rio -->
+<!-- Desarrollador Version 1 -->
+<!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
+
+<div class="login-container">
+  <h2>SIGHA</h2>
+  <h4>Sistema de Gestión de Horarios y Asignación</h4>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <input type="email" [(ngModel)]="email" placeholder="Correo electrónico" />
+  <input type="password" [(ngModel)]="password" placeholder="Contraseña" />
+  <button (click)="login()">Ingresar</button>
+</div>

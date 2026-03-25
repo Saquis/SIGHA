@@ -1,0 +1,43 @@
+<!-- German Del Rio -->
+<!-- Desarrollador Version 1 -->
+<!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
+
+<div class="container">
+  <h2>Gestión de Docentes</h2>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div class="form">
+    <input [(ngModel)]="nuevo.nombre" placeholder="Nombre completo" />
+    <input [(ngModel)]="nuevo.email" placeholder="Correo electrónico" />
+    <input type="password" [(ngModel)]="nuevo.password" placeholder="Contraseña" />
+    <select [(ngModel)]="nuevo.tipo">
+      <option value="tiempo_completo">Tiempo Completo</option>
+      <option value="tiempo_parcial">Tiempo Parcial</option>
+    </select>
+    <button (click)="crearDocente()">Agregar Docente</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Tipo</th>
+        <th>Horas</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of docentes">
+        <td>{{ d.usuario.nombre }}</td>
+        <td>{{ d.usuario.email }}</td>
+        <td>{{ d.tipo }}</td>
+        <td>{{ d.horas_acumuladas }}</td>
+        <td>
+          <button (click)="eliminarDocente(d.id)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

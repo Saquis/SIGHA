@@ -1,0 +1,55 @@
+<!-- German Del Rio -->
+<!-- Desarrollador Version 1 -->
+<!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
+
+<div class="container">
+  <h2>Gestión de Horarios</h2>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="mensaje" class="success">{{ mensaje }}</div>
+
+  <div class="form">
+    <select [(ngModel)]="carreraSeleccionada">
+      <option value="">Seleccione una carrera</option>
+      <option *ngFor="let c of carreras" [value]="c.id">{{ c.nombre }}</option>
+    </select>
+
+    <select [(ngModel)]="moduloSeleccionado" (change)="cargarHorarios()">
+      <option value="">Seleccione un módulo</option>
+      <option *ngFor="let m of modulos" [value]="m.id">
+        Módulo {{ m.numero }} — {{ m.fecha_inicio }} / {{ m.fecha_fin }}
+      </option>
+    </select>
+
+    <button (click)="generarHorarios()">Generar Horarios con IA</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Docente</th>
+        <th>Asignatura</th>
+        <th>Jornada</th>
+        <th>Día</th>
+        <th>Hora Inicio</th>
+        <th>Hora Fin</th>
+        <th>Paralelo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let h of horarios">
+        <td>{{ h.docente.usuario.nombre }}</td>
+        <td>{{ h.asignatura.nombre }}</td>
+        <td>{{ h.jornada }}</td>
+        <td>{{ h.dia }}</td>
+        <td>{{ h.hora_inicio }}</td>
+        <td>{{ h.hora_fin }}</td>
+        <td>{{ h.paralelo }}</td>
+        <td>
+          <button (click)="eliminarHorario(h.id)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

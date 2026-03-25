@@ -1,0 +1,19 @@
+<!-- German Del Rio -->
+<!-- Desarrollador Version 1 -->
+<!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
+
+<div class="container">
+  <h2>Reportes</h2>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div class="form">
+    <select [(ngModel)]="periodoSeleccionado">
+      <option value="">Seleccione un periodo</option>
+      <option *ngFor="let p of periodos" [value]="p.id">
+        {{ p.nombre }}
+      </option>
+    </select>
+    <button (click)="descargarExcel()">Descargar Excel Completo</button>
+  </div>
+</div>

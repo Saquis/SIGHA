@@ -1,0 +1,12 @@
+<!-- German Del Rio -->
+<!-- Desarrollador Version 1 -->
+<!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
+
+<nav *ngIf="authService.estaAutenticado()">
+  <a routerLink="/docentes">Docentes</a>
+  <a routerLink="/horarios">Horarios</a>
+  <a routerLink="/reportes">Reportes</a>
+  <button (click)="authService.cerrarSesion()">Cerrar Sesión</button>
+</nav>
+
+<router-outlet />
