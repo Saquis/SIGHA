@@ -33,21 +33,20 @@ export class ReportesComponent implements OnInit {
   }
 
   descargarExcel() {
-    if (!this.periodoSeleccionado) return;
-    this.http.get(`${environment.apiUrl}/reportes/excel/${this.periodoSeleccionado}`,
-      { responseType: 'blob' }
-    ).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `horarios_${this.periodoSeleccionado}.xlsx`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: () => this.error = 'Error al descargar reporte'
-    });
-  }
+  this.http.get(`${environment.apiUrl}/reportes/excel`,
+    { responseType: 'blob' }
+  ).subscribe({
+    next: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Planificacion_Academica_ITQ.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    },
+    error: () => this.error = 'Error al descargar reporte'
+  });
+}
 
   descargarExcelDocente(docenteId: string) {
     this.http.get(`${environment.apiUrl}/reportes/excel/docente/${docenteId}`,

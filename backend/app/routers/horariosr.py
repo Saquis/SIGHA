@@ -3,7 +3,7 @@
 # SIGHA - Sistema de Gestión de Horarios y Asignación
 # routers/horariosr.py: Endpoints para generación y gestión de horarios
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from uuid import UUID
@@ -23,11 +23,12 @@ def listar_modulos(
 ):
     return db.query(Modulo).all()
 
+# Endpoint para generar horarios usando IA de Groq
 
 @router.post("/generar")
 def generar_horarios_ia(
-    modulo_id: str = Body(..., embed=True),
-    carrera_id: str = Body(..., embed=True),
+    modulo_id: str = Query(...),
+    carrera_id: str = Query(...),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(obtener_usuario_actual)
 ):

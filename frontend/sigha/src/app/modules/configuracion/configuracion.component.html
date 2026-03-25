@@ -1,0 +1,125 @@
+<!-- German Del Rio -->
+<!-- Desarrollador Version 1 -->
+<!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
+
+<div class="p-6">
+  <h2 class="text-2xl font-bold text-blue-800 mb-6">Configuración del Sistema</h2>
+
+  <div *ngIf="error" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
+  <div *ngIf="mensaje" class="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">{{ mensaje }}</div>
+
+  <!-- Carreras -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-700 mb-4">Carreras</h3>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <input [(ngModel)]="nuevaCarrera.nombre" placeholder="Nombre de la carrera"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <input [(ngModel)]="nuevaCarrera.codigo" placeholder="Código (ej: DS)"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+    </div>
+    <button (click)="crearCarrera()"
+      class="bg-blue-800 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 transition">
+      Agregar Carrera
+    </button>
+    <table class="w-full text-sm mt-4">
+      <thead class="bg-blue-800 text-white">
+        <tr>
+          <th class="px-4 py-3 text-left">Nombre</th>
+          <th class="px-4 py-3 text-left">Código</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of carreras; let i = index" [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+          <td class="px-4 py-3">{{ c.nombre }}</td>
+          <td class="px-4 py-3">{{ c.codigo }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Periodos -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-700 mb-4">Periodos Académicos</h3>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <input [(ngModel)]="nuevoPeriodo.nombre" placeholder="Nombre del periodo (ej: Periodo 2026-1)"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <input [(ngModel)]="nuevoPeriodo.numero_paralelos" type="number" placeholder="Número de paralelos"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Fecha inicio</label>
+        <input [(ngModel)]="nuevoPeriodo.fecha_inicio" type="date"
+          class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Fecha fin</label>
+        <input [(ngModel)]="nuevoPeriodo.fecha_fin" type="date"
+          class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      </div>
+    </div>
+    <button (click)="crearPeriodo()"
+      class="bg-blue-800 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 transition">
+      Agregar Periodo
+    </button>
+    <table class="w-full text-sm mt-4">
+      <thead class="bg-blue-800 text-white">
+        <tr>
+          <th class="px-4 py-3 text-left">Nombre</th>
+          <th class="px-4 py-3 text-left">Inicio</th>
+          <th class="px-4 py-3 text-left">Fin</th>
+          <th class="px-4 py-3 text-left">Paralelos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of periodos; let i = index" [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+          <td class="px-4 py-3">{{ p.nombre }}</td>
+          <td class="px-4 py-3">{{ p.fecha_inicio }}</td>
+          <td class="px-4 py-3">{{ p.fecha_fin }}</td>
+          <td class="px-4 py-3">{{ p.numero_paralelos }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Asignaturas -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-700 mb-4">Asignaturas</h3>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <select [(ngModel)]="nuevaAsignatura.carrera_id"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">Seleccione una carrera</option>
+        <option *ngFor="let c of carreras" [value]="c.id">{{ c.nombre }}</option>
+      </select>
+      <input [(ngModel)]="nuevaAsignatura.nombre" placeholder="Nombre de la asignatura"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <input [(ngModel)]="nuevaAsignatura.nivel" type="number" placeholder="Nivel"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+      <select [(ngModel)]="nuevaAsignatura.horas_semanales"
+        class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option [value]="2">Matutina (2 horas)</option>
+        <option [value]="1.5">Nocturna (1.5 horas)</option>
+      </select>
+    </div>
+    <button (click)="crearAsignatura()"
+      class="bg-blue-800 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 transition">
+      Agregar Asignatura
+    </button>
+    <table class="w-full text-sm mt-4">
+      <thead class="bg-blue-800 text-white">
+        <tr>
+          <th class="px-4 py-3 text-left">Nombre</th>
+          <th class="px-4 py-3 text-left">Carrera</th>
+          <th class="px-4 py-3 text-left">Nivel</th>
+          <th class="px-4 py-3 text-left">Horas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of asignaturas; let i = index" [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+          <td class="px-4 py-3">{{ a.nombre }}</td>
+          <td class="px-4 py-3">{{ a.carrera.nombre }}</td>
+          <td class="px-4 py-3">{{ a.nivel }}</td>
+          <td class="px-4 py-3">{{ a.horas_semanales }}h</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

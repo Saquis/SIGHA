@@ -18,6 +18,7 @@ export class DocentesComponent implements OnInit {
   docentes: any[] = [];
   nuevo = { nombre: '', email: '', password: '', tipo: 'tiempo_completo' };
   error = '';
+  loading = false;
 
   constructor(private http: HttpClient) {}
 
@@ -26,26 +27,57 @@ export class DocentesComponent implements OnInit {
   }
 
   cargarDocentes() {
+    this.loading = true;
     this.http.get<any[]>(`${environment.apiUrl}/docentes/`).subscribe({
-      next: (data) => this.docentes = data,
-      error: () => this.error = 'Error al cargar docentes'
+      next: (data) => {
+        this.docentes = data;
+        this.error = '';
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Error al cargar docentes';
+        this.loading = false;
+      }
     });
   }
 
   crearDocente() {
-    this.http.post(`${environment.apiUrl}/docentes/`, this.nuevo).subscribe({
-      next: () => {
-        this.cargarDocentes();
-        this.nuevo = { nombre: '', email: '', password: '', tipo: 'tiempo_completo' };
-      },
-      error: () => this.error = 'Error al crear docente'
-    });
-  }
+    if (!this.nuevo.nombre || !this.nuevo.email || !this.nuevo.password) {
+      this.error = 'Complete todos los campos';
+      return;
+    }
 
-  eliminarDocente(id: string) {
-    this.http.delete(`${environment.apiUrl}/docentes/${id}`).subscribe({
-      next: () => this.cargarDocentes(),
-      error: () => this.error = 'Error al eliminar docente'
+    this.loading = true;
+    this.error = '';
+
+    const usuarioData = {
+      nombre: this.nuevo.nombre,
+      email: this.nuevo.email,
+      password: this.nuevo.password,
+      rol: 'docente'
+    };
+
+    this.http.post<any>(`${environment.apiUrl}/auth/register`, usuarioData).subscribe({
+      next: (usuario) => {
+        const docenteData = {
+          usuario_id: usuario.id,
+          tipo: this.nuevo.tipo
+        };
+        this.http.post(`${environment.apiUrl}/docentes/`, docenteData).subscribe({
+          next: () => {
+            this.cargarDocentes();
+            this.nuevo = { nombre: '', email: '', password: '', tipo: 'tiempo_completo' };
+          },
+          error: () => {
+            this.error = 'Error al crear docente';
+            this.loading = false;
+          }
+        });
+      },
+      error: () => {
+        this.error = 'Error al registrar usuario';
+        this.loading = false;
+      }
     });
   }
 }

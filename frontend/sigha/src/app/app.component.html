@@ -2,11 +2,19 @@
 <!-- Desarrollador Version 1 -->
 <!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
 
-<nav *ngIf="authService.estaAutenticado()">
-  <a routerLink="/docentes">Docentes</a>
-  <a routerLink="/horarios">Horarios</a>
-  <a routerLink="/reportes">Reportes</a>
-  <button (click)="authService.cerrarSesion()">Cerrar Sesión</button>
+<nav *ngIf="authService.estaAutenticado()" class="bg-blue-800 text-white px-6 py-3 flex items-center justify-between shadow">
+  <span class="font-bold text-lg tracking-wide">SIGHA</span>
+  <div class="flex gap-6 items-center">
+    <a routerLink="/docentes" class="hover:text-blue-200 text-sm">Docentes</a>
+    <a routerLink="/horarios" class="hover:text-blue-200 text-sm">Horarios</a>
+    <a routerLink="/reportes" class="hover:text-blue-200 text-sm">Reportes</a>
+    <a routerLink="/configuracion" class="hover:text-blue-200 text-sm">Configuración</a>
+    <button 
+      (click)="authService.cerrarSesion()" 
+      class="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100 transition">
+      Cerrar Sesión
+    </button>
+  </div>
 </nav>
 
 <router-outlet />

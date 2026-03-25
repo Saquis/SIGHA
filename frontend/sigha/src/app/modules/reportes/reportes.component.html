@@ -2,18 +2,49 @@
 <!-- Desarrollador Version 1 -->
 <!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
 
-<div class="container">
-  <h2>Reportes</h2>
+<div class="p-6">
+  <h2 class="text-2xl font-bold text-blue-800 mb-6">Reportes</h2>
 
-  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="error" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
 
-  <div class="form">
-    <select [(ngModel)]="periodoSeleccionado">
-      <option value="">Seleccione un periodo</option>
-      <option *ngFor="let p of periodos" [value]="p.id">
-        {{ p.nombre }}
-      </option>
-    </select>
-    <button (click)="descargarExcel()">Descargar Excel Completo</button>
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-700 mb-4">Exportar Planificación Académica</h3>
+    <p class="text-sm text-gray-500 mb-4">
+      Descarga el archivo Excel con las 5 hojas requeridas: Modulo1, Modulo2, Modulo3, 
+      Carga horaria por módulos y Carga horaria total.
+    </p>
+
+    <div *ngIf="error" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Periodo Académico</label>
+        <select [(ngModel)]="periodoSeleccionado"
+          class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Seleccione un periodo</option>
+          <option *ngFor="let p of periodos" [value]="p.id">{{ p.nombre }}</option>
+        </select>
+      </div>
+    </div>
+
+    <button (click)="descargarExcel()"
+      class="bg-green-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-green-700 transition">
+      Descargar Excel Completo
+    </button>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+      <div class="text-3xl font-bold text-blue-800 mb-2">3</div>
+      <div class="text-sm text-gray-500">Módulos por Periodo</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+      <div class="text-3xl font-bold text-green-600 mb-2">2</div>
+      <div class="text-sm text-gray-500">Periodos por Año</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+      <div class="text-3xl font-bold text-indigo-600 mb-2">5</div>
+      <div class="text-sm text-gray-500">Hojas en el Excel</div>
+    </div>
   </div>
 </div>

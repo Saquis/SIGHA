@@ -2,54 +2,80 @@
 <!-- Desarrollador Version 1 -->
 <!-- SIGHA - Sistema de Gestión de Horarios y Asignación -->
 
-<div class="container">
-  <h2>Gestión de Horarios</h2>
+<div class="p-6">
+  <h2 class="text-2xl font-bold text-blue-800 mb-6">Gestión de Horarios</h2>
 
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <div *ngIf="mensaje" class="success">{{ mensaje }}</div>
+  <div *ngIf="error" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
+  <div *ngIf="mensaje" class="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">{{ mensaje }}</div>
 
-  <div class="form">
-    <select [(ngModel)]="carreraSeleccionada">
-      <option value="">Seleccione una carrera</option>
-      <option *ngFor="let c of carreras" [value]="c.id">{{ c.nombre }}</option>
-    </select>
-
-    <select [(ngModel)]="moduloSeleccionado" (change)="cargarHorarios()">
-      <option value="">Seleccione un módulo</option>
-      <option *ngFor="let m of modulos" [value]="m.id">
-        Módulo {{ m.numero }} — {{ m.fecha_inicio }} / {{ m.fecha_fin }}
-      </option>
-    </select>
-
-    <button (click)="generarHorarios()">Generar Horarios con IA</button>
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-700 mb-4">Generar Horarios</h3>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Carrera</label>
+        <select [(ngModel)]="carreraSeleccionada"
+          class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Seleccione una carrera</option>
+          <option *ngFor="let c of carreras" [value]="c.id">{{ c.nombre }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Módulo</label>
+        <select [(ngModel)]="moduloSeleccionado" (change)="cargarHorarios()"
+          class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Seleccione un módulo</option>
+          <option *ngFor="let m of modulos" [value]="m.id">
+            Módulo {{ m.numero }} — {{ m.fecha_inicio }} / {{ m.fecha_fin }}
+          </option>
+        </select>
+      </div>
+    </div>
+    <button (click)="generarHorarios()"
+      class="mt-4 bg-blue-800 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 transition">
+      Generar Horarios con IA
+    </button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Docente</th>
-        <th>Asignatura</th>
-        <th>Jornada</th>
-        <th>Día</th>
-        <th>Hora Inicio</th>
-        <th>Hora Fin</th>
-        <th>Paralelo</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let h of horarios">
-        <td>{{ h.docente.usuario.nombre }}</td>
-        <td>{{ h.asignatura.nombre }}</td>
-        <td>{{ h.jornada }}</td>
-        <td>{{ h.dia }}</td>
-        <td>{{ h.hora_inicio }}</td>
-        <td>{{ h.hora_fin }}</td>
-        <td>{{ h.paralelo }}</td>
-        <td>
-          <button (click)="eliminarHorario(h.id)">Eliminar</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-blue-800 text-white">
+        <tr>
+          <th class="px-4 py-3 text-left">Docente</th>
+          <th class="px-4 py-3 text-left">Asignatura</th>
+          <th class="px-4 py-3 text-left">Jornada</th>
+          <th class="px-4 py-3 text-left">Día</th>
+          <th class="px-4 py-3 text-left">Hora Inicio</th>
+          <th class="px-4 py-3 text-left">Hora Fin</th>
+          <th class="px-4 py-3 text-left">Paralelo</th>
+          <th class="px-4 py-3 text-left">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let h of horarios; let i = index" [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+          <td class="px-4 py-3">{{ h.docente.usuario.nombre }}</td>
+          <td class="px-4 py-3">{{ h.asignatura.nombre }}</td>
+          <td class="px-4 py-3">
+            <span [class]="h.jornada === 'matutina' ? 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs' : 'bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs'">
+              {{ h.jornada }}
+            </span>
+          </td>
+          <td class="px-4 py-3">{{ h.dia }}</td>
+          <td class="px-4 py-3">{{ h.hora_inicio }}</td>
+          <td class="px-4 py-3">{{ h.hora_fin }}</td>
+          <td class="px-4 py-3">{{ h.paralelo }}</td>
+          <td class="px-4 py-3">
+            <button (click)="eliminarHorario(h.id)"
+              class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="horarios.length === 0">
+          <td colspan="8" class="px-4 py-6 text-center text-gray-400">
+            No hay horarios generados para este módulo
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

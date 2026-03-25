@@ -11,5 +11,5 @@ export const routes: Routes = [
   { path: 'docentes', canActivate: [authGuard], loadComponent: () => import('./modules/docentes/docentes.component').then(m => m.DocentesComponent) },
   { path: 'horarios', canActivate: [authGuard], loadComponent: () => import('./modules/horarios/horarios.component').then(m => m.HorariosComponent) },
   { path: 'reportes', canActivate: [authGuard], loadComponent: () => import('./modules/reportes/reportes.component').then(m => m.ReportesComponent) },
-  { path: '**', redirectTo: 'login' }
+  { path: 'configuracion', canActivate: [authGuard], loadComponent: () => import('./modules/configuracion/configuracion.component').then(m => m.ConfiguracionComponent) },{ path: '**', redirectTo: 'login' }
 ];

@@ -53,22 +53,27 @@ export class HorariosComponent implements OnInit {
   }
 
   generarHorarios() {
-    if (!this.moduloSeleccionado || !this.carreraSeleccionada) {
-      this.error = 'Seleccione módulo y carrera';
-      return;
-    }
-    this.http.post(
-      `${environment.apiUrl}/horarios/generar?modulo_id=${this.moduloSeleccionado}&carrera_id=${this.carreraSeleccionada}`,
-      {}
-    ).subscribe({
-      next: (res: any) => {
+  if (!this.moduloSeleccionado || !this.carreraSeleccionada) {
+    this.error = 'Seleccione módulo y carrera';
+    return;
+  }
+  this.http.post(
+    `${environment.apiUrl}/horarios/generar?modulo_id=${this.moduloSeleccionado}&carrera_id=${this.carreraSeleccionada}`,
+    {}
+  ).subscribe({
+    next: (res: any) => {
+      if (res.status === 'requiere_ajuste') {
+        this.error = 'Conflictos: ' + res.errores.join(' | ');
+        this.mensaje = '';
+      } else {
         this.mensaje = res.mensaje;
         this.error = '';
-        this.cargarHorarios();
-      },
-      error: () => this.error = 'Error al generar horarios'
-    });
-  }
+      }
+      this.cargarHorarios();
+    },
+    error: () => this.error = 'Error al generar horarios'
+  });
+}
 
   eliminarHorario(id: string) {
     this.http.delete(`${environment.apiUrl}/horarios/${id}`).subscribe({
