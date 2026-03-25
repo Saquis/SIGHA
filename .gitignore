@@ -1,0 +1,13 @@
+# Entornos Virtuales
+venv/
+env/
+.env
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
