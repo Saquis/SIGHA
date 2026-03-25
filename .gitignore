@@ -7,7 +7,7 @@ env/
 __pycache__/
 *.pyc
 
-# Angular
-frontend/node_modules/
-frontend/dist/
-frontend/.angular/
+# Angular (A prueba de balas)
+**/node_modules/
+**/dist/
+**/.angular/
