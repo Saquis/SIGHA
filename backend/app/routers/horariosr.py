@@ -132,27 +132,65 @@ def guardar_horario_manual(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(obtener_usuario_actual)
 ):
-    """
-    Guarda la planificación final tras la edición manual en el frontend.
-    Recibe IDs por URL para evitar fallos si la tabla no los incluye.
-    """
-    # 1. Verificación de seguridad
-    verificar_rol_coordinador(current_user)
+    try:
+        # 1. Verificación de seguridad
+        verificar_rol_coordinador(current_user)
 
-    if not horarios_editados:
-        raise HTTPException(status_code=400, detail="La lista de horarios proporcionada está vacía.")
+        if not horarios_editados:
+            raise HTTPException(status_code=400, detail="La lista proporcionada está vacía.")
 
-    # 2. Validación de reglas de negocio sobre los datos editados
-    errores = validar_horario_itq(horarios_editados, db)
-    
-    if errores:
-        raise HTTPException(
-            status_code=409, 
-            detail={
-                "mensaje": "La edición manual contiene conflictos con las reglas de negocio.",
-                "errores": errores[:10]
-            }
-        )
+        # 2. ESCUDO 1: Proteger la validación
+        try:
+            errores = validar_horario_itq(horarios_editados, db)
+        except Exception as val_error:
+            raise HTTPException(status_code=500, detail=f"Error en validación ITQ: {str(val_error)}")
+        
+        if errores:
+            raise HTTPException(
+                status_code=409, 
+                detail={
+                    "mensaje": "Aún existen conflictos con las reglas.",
+                    "errores": errores[:10]
+                }
+            )
+
+        # 3. ESCUDO 2: Proteger la inserción
+        nuevos_horarios = []
+        for item in horarios_editados:
+            # Usamos .get() para que si la IA olvidó un campo, no explote el programa
+            nuevo_horario = Horario(
+                id=uuid4(),
+                modulo_id=UUID(str(item.get('modulo_id', modulo_id))),
+                docente_id=UUID(str(item.get('docente_id'))),
+                asignatura_id=UUID(str(item.get('asignatura_id'))),
+                carrera_id=UUID(str(item.get('carrera_id', carrera_id))),
+                paralelo=item.get('paralelo', 1),
+                jornada=item.get('jornada', 'matutina'),
+                dia=item.get('dia', 'Lunes'),
+                hora_inicio=item.get('hora_inicio', '08:00'),
+                hora_fin=item.get('hora_fin', '10:00')
+            )
+            db.add(nuevo_horario)
+            nuevos_horarios.append(nuevo_horario)
+
+        db.commit()
+
+        for h in nuevos_horarios:
+            db.refresh(h)
+
+        return {
+            "status": "exito", 
+            "mensaje": "Planificación final guardada con éxito.",
+            "total_registros": len(nuevos_horarios)
+        }
+
+    except HTTPException:
+        db.rollback()
+        raise # Si es un error controlado (400, 409), lo dejamos pasar normal
+    except Exception as e:
+        db.rollback()
+        # ESCUDO FINAL: Atrapa cualquier error crítico y lo envía limpio a Angular
+        raise HTTPException(status_code=500, detail=f"Error crítico en datos: {str(e)}")
 
     # 3. Guardado en base de datos
     nuevos_horarios = []
