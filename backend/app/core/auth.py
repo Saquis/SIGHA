@@ -39,6 +39,7 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 480))
 
 
+#   Configuración de PassLib para hashing de contraseñas
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -46,9 +47,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 
+# Funciones de autenticación
 
-
-def verificar_password(plain_password, hashed_password):
+def verificar_password(plain_password, hashed_password): #   Verifica la contraseña ingresada con la almacenada en la base de datos
 
     return pwd_context.verify(plain_password, hashed_password)
 
