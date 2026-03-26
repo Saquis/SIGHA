@@ -1,5 +1,5 @@
 // German Del Rio
-// Desarrollador Version 1.2
+// Desarrollador Version 1.3 (Corregido envio de IDs por URL)
 // SIGHA - Sistema de Gestión de Horarios y Asignación
 
 import { Component, OnInit } from '@angular/core';
@@ -82,14 +82,23 @@ export class HorariosComponent implements OnInit {
     });
   }
 
-  // NUEVA FUNCIÓN: Guardar la planificación después de la edición manual
+  // NUEVA FUNCIÓN: Guardar la planificación enviando IDs por URL
   guardarPlanificacionFinal() {
     if (!this.horarios || this.horarios.length === 0) {
       this.error = 'No hay horarios para guardar';
       return;
     }
 
-    this.http.post(`${environment.apiUrl}/horarios/guardar_manual`, this.horarios).subscribe({
+    if (!this.moduloSeleccionado || !this.carreraSeleccionada) {
+      this.error = 'Debe seleccionar un módulo y una carrera para guardar.';
+      return;
+    }
+
+    // Se envían modulo_id y carrera_id como parámetros Query en la URL
+    this.http.post(
+      `${environment.apiUrl}/horarios/guardar_manual?modulo_id=${this.moduloSeleccionado}&carrera_id=${this.carreraSeleccionada}`, 
+      this.horarios
+    ).subscribe({
       next: (res: any) => {
         this.mensaje = 'Planificación final guardada con éxito';
         this.error = '';

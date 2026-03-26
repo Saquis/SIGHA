@@ -126,12 +126,15 @@ def generar_horarios_ia(
 
 @router.post("/guardar_manual")
 def guardar_horario_manual(
+    modulo_id: str = Query(...),
+    carrera_id: str = Query(...),
     horarios_editados: List[Dict[str, Any]] = Body(...),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(obtener_usuario_actual)
 ):
     """
     Guarda la planificación final tras la edición manual en el frontend.
+    Recibe IDs por URL para evitar fallos si la tabla no los incluye.
     """
     # 1. Verificación de seguridad
     verificar_rol_coordinador(current_user)
@@ -156,16 +159,12 @@ def guardar_horario_manual(
     try:
         for item in horarios_editados:
             try:
-                c_id = item.get('carrera_id')
-                if not c_id:
-                     raise ValueError("Falta el identificador de carrera en el registro.")
-
                 nuevo_horario = Horario(
                     id=uuid4(),
-                    modulo_id=UUID(str(item['modulo_id'])),
+                    modulo_id=UUID(str(item.get('modulo_id', modulo_id))),
                     docente_id=UUID(str(item['docente_id'])),
                     asignatura_id=UUID(str(item['asignatura_id'])),
-                    carrera_id=UUID(str(c_id)),
+                    carrera_id=UUID(str(item.get('carrera_id', carrera_id))),
                     paralelo=item.get('paralelo', 1),
                     jornada=item['jornada'],
                     dia=item['dia'],
