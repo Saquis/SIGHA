@@ -139,20 +139,50 @@ def guardar_horario_manual(
         if not horarios_editados:
             raise HTTPException(status_code=400, detail="La lista proporcionada está vacía.")
 
-        # 2. ESCUDO 1: Proteger la validación
-        try:
-            errores = validar_horario_itq(horarios_editados, db)
-        except Exception as val_error:
-            raise HTTPException(status_code=500, detail=f"Error en validación ITQ: {str(val_error)}")
-        
-        if errores:
-            raise HTTPException(
-                status_code=409, 
-                detail={
-                    "mensaje": "Aún existen conflictos con las reglas.",
-                    "errores": errores[:10]
-                }
+        # 2. Guardado en base de datos
+        nuevos_horarios = []
+        for item in horarios_editados:
+            # LA SOLUCIÓN: Buscar el ID directo, o si viene anidado desde el frontend, extraerlo
+            doc_id = item.get('docente_id')
+            if not doc_id and 'docente' in item:
+                doc_id = item['docente'].get('id')
+
+            asig_id = item.get('asignatura_id')
+            if not asig_id and 'asignatura' in item:
+                asig_id = item['asignatura'].get('id')
+
+            if not doc_id or not asig_id:
+                raise HTTPException(status_code=400, detail="Faltan datos del docente o asignatura")
+
+            nuevo_horario = Horario(
+                id=uuid4(),
+                modulo_id=UUID(str(item.get('modulo_id', modulo_id))),
+                docente_id=UUID(str(doc_id)),
+                asignatura_id=UUID(str(asig_id)),
+                carrera_id=UUID(str(item.get('carrera_id', carrera_id))),
+                paralelo=item.get('paralelo', 1),
+                jornada=item.get('jornada', 'matutina'),
+                dia=item.get('dia', 'Lunes'),
+                hora_inicio=item.get('hora_inicio', '08:00'),
+                hora_fin=item.get('hora_fin', '10:00')
             )
+            db.add(nuevo_horario)
+            nuevos_horarios.append(nuevo_horario)
+
+        db.commit()
+
+        for h in nuevos_horarios:
+            db.refresh(h)
+
+        return {
+            "status": "exito", 
+            "mensaje": "Planificación final guardada con éxito.",
+            "total_registros": len(nuevos_horarios)
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error crítico en datos: {str(e)}")
 
         # 3. ESCUDO 2: Proteger la inserción
         nuevos_horarios = []
