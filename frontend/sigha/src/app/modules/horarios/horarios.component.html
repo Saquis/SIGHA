@@ -30,10 +30,18 @@
         </select>
       </div>
     </div>
-    <button (click)="generarHorarios()"
-      class="mt-4 bg-blue-800 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 transition">
-      Generar Horarios con IA
-    </button>
+    
+    <div class="mt-4 flex gap-4">
+      <button (click)="generarHorarios()"
+        class="bg-blue-800 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 transition">
+        Generar Horarios con IA
+      </button>
+
+      <button *ngIf="horarios.length > 0" (click)="guardarPlanificacionFinal()"
+        class="bg-green-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-green-700 transition">
+        Guardar Planificación Final
+      </button>
+    </div>
   </div>
 
   <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -52,8 +60,8 @@
       </thead>
       <tbody>
         <tr *ngFor="let h of horarios; let i = index" [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
-          <td class="px-4 py-3">{{ h.docente.usuario.nombre }}</td>
-          <td class="px-4 py-3">{{ h.asignatura.nombre }}</td>
+          <td class="px-4 py-3">{{ h.docente?.usuario?.nombre || h.docente_nombre || 'Pendiente' }}</td>
+          <td class="px-4 py-3">{{ h.asignatura?.nombre || h.asignatura_nombre || 'Pendiente' }}</td>
           <td class="px-4 py-3">
             <span [class]="h.jornada === 'matutina' ? 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs' : 'bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs'">
               {{ h.jornada }}

@@ -25,7 +25,13 @@ export class LoginComponent {
     this.authService.login(this.email, this.password).subscribe({
       next: (res) => {
         this.authService.guardarToken(res.access_token);
-        this.router.navigate(['/horarios']);
+        //  Obtener rol y redirigir según tipo de usuario
+        const rol = this.authService.obtenerRol();
+        if (rol === 'docente') {
+          this.router.navigate(['/mis-horarios']);
+        } else {
+          this.router.navigate(['/horarios']);
+        }
       },
       error: () => {
         this.error = 'Credenciales incorrectas';

@@ -9,6 +9,10 @@
     <a routerLink="/horarios" class="hover:text-blue-200 text-sm">Horarios</a>
     <a routerLink="/reportes" class="hover:text-blue-200 text-sm">Reportes</a>
     <a routerLink="/configuracion" class="hover:text-blue-200 text-sm">Configuración</a>
+    <!--  Enlace condicional: solo visible para rol 'docente' -->
+    <a *ngIf="authService.obtenerRol() === 'docente'" 
+       routerLink="/mis-horarios" 
+       class="hover:text-blue-200 text-sm">Mis Horarios</a>
     <button 
       (click)="authService.cerrarSesion()" 
       class="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100 transition">

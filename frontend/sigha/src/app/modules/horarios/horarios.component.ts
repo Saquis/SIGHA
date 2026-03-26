@@ -1,5 +1,5 @@
 // German Del Rio
-// Desarrollador Version 1
+// Desarrollador Version 1.2
 // SIGHA - Sistema de Gestión de Horarios y Asignación
 
 import { Component, OnInit } from '@angular/core';
@@ -48,7 +48,7 @@ export class HorariosComponent implements OnInit {
 
   // Cargar horarios filtrados por módulo seleccionado
   cargarHorarios() {
-    if (!this.moduloSeleccionado) return; //  Validar que haya módulo seleccionado
+    if (!this.moduloSeleccionado) return; // Validar que haya módulo seleccionado
     this.http.get<any[]>(`${environment.apiUrl}/horarios/?modulo_id=${this.moduloSeleccionado}`).subscribe({
       next: (data) => this.horarios = data,
       error: () => this.error = 'Error al cargar horarios'
@@ -59,24 +59,50 @@ export class HorariosComponent implements OnInit {
   generarHorarios() {
     if (!this.moduloSeleccionado || !this.carreraSeleccionada) {
       this.error = 'Seleccione módulo y carrera';
-      return; // ⚠️ Validar campos obligatorios antes de llamar al backend
+      return; // Validar campos obligatorios antes de llamar al backend
     }
     this.http.post(
       `${environment.apiUrl}/horarios/generar?modulo_id=${this.moduloSeleccionado}&carrera_id=${this.carreraSeleccionada}`,
       {}
     ).subscribe({
       next: (res: any) => {
-        // ⚠️ Manejar respuesta condicional: requiere_ajuste vs éxito
+        // Manejar respuesta condicional: requiere_ajuste vs éxito
         if (res.status === 'requiere_ajuste') {
+          // Si requiere ajuste, guardamos la propuesta en la variable para poder editarla
+          this.horarios = res.propuesta_sugerida; 
           this.error = 'Conflictos: ' + res.errores.join(' | ');
-          this.mensaje = '';
+          this.mensaje = 'Por favor, edite los horarios y guarde manualmente.';
         } else {
           this.mensaje = res.mensaje;
           this.error = '';
+          this.cargarHorarios(); // Recargar lista solo si se guardó en BD
         }
-        this.cargarHorarios(); //  Recargar lista solo si se guardó en BD
       },
       error: () => this.error = 'Error al generar horarios'
+    });
+  }
+
+  // NUEVA FUNCIÓN: Guardar la planificación después de la edición manual
+  guardarPlanificacionFinal() {
+    if (!this.horarios || this.horarios.length === 0) {
+      this.error = 'No hay horarios para guardar';
+      return;
+    }
+
+    this.http.post(`${environment.apiUrl}/horarios/guardar_manual`, this.horarios).subscribe({
+      next: (res: any) => {
+        this.mensaje = 'Planificación final guardada con éxito';
+        this.error = '';
+        this.cargarHorarios(); 
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.error = 'Error de validación: ' + err.error.detail.mensaje;
+        } else {
+          this.error = 'Error en el servidor al guardar la planificación';
+        }
+        this.mensaje = '';
+      }
     });
   }
 
@@ -86,9 +112,9 @@ export class HorariosComponent implements OnInit {
       next: () => {
         this.mensaje = 'Horario eliminado correctamente';
         this.error = '';
-        this.cargarHorarios(); //  Actualizar lista después de eliminar
+        this.cargarHorarios(); // Actualizar lista después de eliminar
       },
       error: () => this.error = 'Error al eliminar horario'
     });
   }
-} // CORRECCIÓN: Faltaba el cierre de la clase
+}

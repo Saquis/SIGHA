@@ -3,7 +3,7 @@
 # SIGHA - Sistema de Gestión de Horarios y Asignación
 # routers/horariosr.py: Endpoints para generación y gestión de horarios
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from uuid import UUID, uuid4
@@ -45,17 +45,17 @@ def generar_horarios_ia(
 ):
     """
     Genera horarios usando IA. 
-    Solo coordinadores pueden ejecutar esta acción.
+    Restringido a coordinadores.
     """
     # 1. Verificar permisos
     verificar_rol_coordinador(current_user)
 
-    # 2. Validar que el módulo existe
+    # 2. Validar existencia del módulo
     modulo = db.query(Modulo).filter(Modulo.id == modulo_id).first()
     if not modulo:
         raise HTTPException(status_code=404, detail="Módulo no encontrado")
 
-    # 3. Prevenir duplicados: Verificar si ya existen horarios para este módulo
+    # 3. Prevenir duplicados en la generación
     existentes = db.query(Horario).filter(Horario.modulo_id == modulo_id).count()
     if existentes > 0:
         raise HTTPException(
@@ -63,36 +63,35 @@ def generar_horarios_ia(
             detail=f"El módulo ya tiene {existentes} horarios asignados. Elimínelos antes de generar nuevos."
         )
 
-    # 4. Solicitar propuesta a Groq
+    # 4. Solicitar propuesta a la IA
     try:
         propuesta_json = generar_propuesta_ia(db, modulo_id, carrera_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al conectar con la IA de Groq: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error en la conexión con la IA: {str(e)}")
 
     if not propuesta_json:
-        raise HTTPException(status_code=500, detail="La IA no generó ninguna propuesta válida")
+        raise HTTPException(status_code=500, detail="No se generó una propuesta válida")
 
-    # 5. Validar reglas de negocio ('El Juez')
+    # 5. Validar reglas de negocio institucionales
     errores = validar_horario_itq(propuesta_json, db)
 
-    # 6. Flujo alterno: Hay choques o violaciones
+    # 6. Manejo de flujo con conflictos
     if errores:
         return {
             "status": "requiere_ajuste",
-            "mensaje": "Se generó la propuesta pero existen conflictos con las reglas del ITQ.",
-            "errores": errores[:10],  # Limitar a 10 errores para no saturar la respuesta
+            "mensaje": "Propuesta generada con conflictos de reglas de negocio.",
+            "errores": errores[:10],
             "propuesta_sugerida": propuesta_json,
             "total_errores": len(errores)
         }
 
-    # 7. Flujo feliz: Guardar en BD con transacción segura
+    # 7. Guardado en base de datos con manejo de transacciones
     nuevos_horarios = []
     try:
         for item in propuesta_json:
-            # Validación segura de UUIDs
             try:
                 nuevo_horario = Horario(
-                    id=uuid4(),  # Generar ID propio para el horario
+                    id=uuid4(),
                     modulo_id=UUID(modulo_id),
                     docente_id=UUID(item['docente_id']),
                     asignatura_id=UUID(item['asignatura_id']),
@@ -105,19 +104,18 @@ def generar_horarios_ia(
                 )
                 db.add(nuevo_horario)
                 nuevos_horarios.append(nuevo_horario)
-            except ValueError as e:
-                # Si un ID no es UUID válido, se registra el error pero no se rompe todo
+            except ValueError:
+                # Omitir registros con UUIDs inválidos
                 continue
         
         db.commit()
         
-        # Refresh para obtener IDs generados
         for h in nuevos_horarios:
             db.refresh(h)
 
     except Exception as e:
-        db.rollback()  # ⚠️ CRÍTICO: Deshacer cambios si falla algo
-        raise HTTPException(status_code=500, detail=f"Error al guardar horarios: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al guardar los horarios: {str(e)}")
 
     return {
         "status": "exito",
@@ -126,33 +124,97 @@ def generar_horarios_ia(
         "horarios": [HorarioOut.from_orm(h) for h in nuevos_horarios]
     }
 
-@router.get("/", response_model=List[HorarioOut])
-def listar_horarios(
-    modulo_id: str = Query(None, description="Filtrar por módulo"),
+@router.post("/guardar_manual")
+def guardar_horario_manual(
+    horarios_editados: List[Dict[str, Any]] = Body(...),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(obtener_usuario_actual)
 ):
     """
-    Lista horarios. 
-    - Docentes: Solo ven los suyos.
-    - Coordinadores: Ven todos o filtran por módulo.
+    Guarda la planificación final tras la edición manual en el frontend.
+    """
+    # 1. Verificación de seguridad
+    verificar_rol_coordinador(current_user)
+
+    if not horarios_editados:
+        raise HTTPException(status_code=400, detail="La lista de horarios proporcionada está vacía.")
+
+    # 2. Validación de reglas de negocio sobre los datos editados
+    errores = validar_horario_itq(horarios_editados, db)
+    
+    if errores:
+        raise HTTPException(
+            status_code=409, 
+            detail={
+                "mensaje": "La edición manual contiene conflictos con las reglas de negocio.",
+                "errores": errores[:10]
+            }
+        )
+
+    # 3. Guardado en base de datos
+    nuevos_horarios = []
+    try:
+        for item in horarios_editados:
+            try:
+                c_id = item.get('carrera_id')
+                if not c_id:
+                     raise ValueError("Falta el identificador de carrera en el registro.")
+
+                nuevo_horario = Horario(
+                    id=uuid4(),
+                    modulo_id=UUID(str(item['modulo_id'])),
+                    docente_id=UUID(str(item['docente_id'])),
+                    asignatura_id=UUID(str(item['asignatura_id'])),
+                    carrera_id=UUID(str(c_id)),
+                    paralelo=item.get('paralelo', 1),
+                    jornada=item['jornada'],
+                    dia=item['dia'],
+                    hora_inicio=item['hora_inicio'],
+                    hora_fin=item['hora_fin']
+                )
+                db.add(nuevo_horario)
+                nuevos_horarios.append(nuevo_horario)
+            except ValueError as e:
+                 raise HTTPException(status_code=400, detail=f"Datos inválidos en el registro: {e}")
+
+        db.commit()
+
+        for h in nuevos_horarios:
+            db.refresh(h)
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error interno al guardar la edición: {str(e)}")
+
+    return {
+        "status": "exito", 
+        "mensaje": "Planificación final guardada con éxito.",
+        "total_registros": len(nuevos_horarios),
+        "horarios": [HorarioOut.from_orm(h) for h in nuevos_horarios]
+    }
+
+@router.get("/", response_model=List[HorarioOut])
+def listar_horarios(
+    modulo_id: str = Query(None, description="Filtro opcional por módulo"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(obtener_usuario_actual)
+):
+    """
+    Lista los horarios registrados. Aplica filtros según el rol del usuario.
     """
     query = db.query(Horario)
 
-    # Filtro por módulo (opcional para coordinadores)
     if modulo_id:
         query = query.filter(Horario.modulo_id == modulo_id)
 
-    # Restricción por rol
     if current_user.rol == "docente":
-        # ⚠️ CORRECCIÓN: Verificar si existe el registro Docente antes de acceder
+        # Validación de integridad referencial para el rol docente
         registro_docente = db.query(Docente).filter(Docente.usuario_id == current_user.id).first()
         if not registro_docente:
-            raise HTTPException(status_code=404, detail="Usuario docente no tiene perfil asociado")
+            raise HTTPException(status_code=404, detail="El usuario no tiene un perfil docente asociado.")
         
         query = query.filter(Horario.docente_id == registro_docente.id)
     
-    # Coordinadores ven todo (o lo filtrado por módulo)
     return query.all()
 
 @router.delete("/{horario_id}")
@@ -162,28 +224,28 @@ def eliminar_horario(
     current_user: Usuario = Depends(obtener_usuario_actual)
 ):
     """
-    Elimina un horario específico. 
-    ⚠️ Solo permitido para coordinadores y administradores.
+    Elimina un registro de horario específico.
+    Restringido a coordinadores y administradores.
     """
-    # 1. Verificar permisos (Seguridad)
+    # 1. Verificación de seguridad
     verificar_rol_coordinador(current_user)
 
-    # 2. Buscar horario
+    # 2. Búsqueda y validación del registro
     try:
         horario_uuid = UUID(horario_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="ID de horario inválido")
+        raise HTTPException(status_code=400, detail="El formato del ID de horario es inválido.")
 
     horario = db.query(Horario).filter(Horario.id == horario_uuid).first()
     if not horario:
-        raise HTTPException(status_code=404, detail="Horario no encontrado")
+        raise HTTPException(status_code=404, detail="Registro de horario no encontrado.")
 
-    # 3. Eliminar
+    # 3. Eliminación
     try:
         db.delete(horario)
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error al eliminar: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno al eliminar el registro: {str(e)}")
 
-    return {"mensaje": "Horario eliminado correctamente", "id": str(horario_id)}
+    return {"mensaje": "Registro eliminado correctamente", "id": str(horario_id)}
